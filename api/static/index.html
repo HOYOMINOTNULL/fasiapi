@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>FastAPI 前端示例</title>
+  <!-- 引入 Bootstrap 样式 -->
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
+  <style>
+    .section { margin: 20px 0; }
+    .video-stream { width: 640px; height: 480px; border: 1px solid #ccc; }
+    pre { background-color: #f8f9fa; padding: 10px; }
+    select, button { margin-right: 10px; }
+  </style>
+</head>
+<body class="container">
+  <h1 class="mt-4">FastAPI 前端示例</h1>
+  
+  <!-- 1. 欢迎页面 -->
+  <div class="section" id="welcome-section">
+    <h2>欢迎</h2>
+    <button class="btn btn-primary" id="fetch-welcome">获取欢迎信息</button>
+    <pre id="welcome-output"></pre>
+  </div>
+  
+  <!-- 2. 视频流展示 -->
+  <div class="section" id="video-section">
+    <h2>视频流展示</h2>
+    <!-- 摄像头选择及控制 -->
+    <label for="cameraSelect">选择摄像头：</label>
+    <select id="cameraSelect" class="form-select d-inline-block w-auto">
+      <option value="0">摄像头 0</option>
+      <option value="1">摄像头 1</option>
+      <option value="2">摄像头 2</option>
+    </select>
+    <button class="btn btn-success" onclick="startStream()">开始视频流</button>
+    <button class="btn btn-danger" onclick="stopStream()">关闭视频流</button>
+    <div class="mt-3">
+      <!-- 注意：这里默认使用 index=0，可通过摄像头下拉选择更新 -->
+      <img id="video-stream" class="video-stream" src="http://127.0.0.1:8000/examination/?index=0" alt="视频流">
+    </div>
+  </div>
+  
+  <!-- 3. 人脸数据管理 -->
+  <div class="section" id="face-section">
+    <h2>人脸数据管理</h2>
+    
+    <!-- 3.1 查询所有人脸数据 -->
+    <button class="btn btn-secondary mb-3" id="fetch-all-face">查询全部人脸数据</button>
+    <pre id="all-face-output"></pre>
+    
+    <!-- 3.2 人脸数据上传 -->
+    <form id="face-upload-form" class="mb-3">
+      <h4>上传人脸数据</h4>
+      <div class="mb-3">
+        <label for="upload-code" class="form-label">工号 (code)</label>
+        <input type="text" class="form-control" id="upload-code" required>
+      </div>
+      <div class="mb-3">
+        <label for="upload-name" class="form-label">姓名 (name)</label>
+        <input type="text" class="form-control" id="upload-name" required>
+      </div>
+      <div class="mb-3">
+        <label for="upload-file" class="form-label">选择文件</label>
+        <input type="file" class="form-control" id="upload-file" accept="image/*" required>
+      </div>
+      <button class="btn btn-primary" type="submit">上传</button>
+      <pre id="upload-output"></pre>
+    </form>
+    
+    <!-- 3.3 人脸数据查询 -->
+    <form id="face-query-form" class="mb-3">
+      <h4>查询人脸数据</h4>
+      <div class="mb-3">
+        <label for="query-code" class="form-label">按工号 (code)：</label>
+        <input type="text" class="form-control" id="query-code">
+      </div>
+      <div class="mb-3">
+        <label for="query-name" class="form-label">按姓名 (name)：</label>
+        <input type="text" class="form-control" id="query-name">
+      </div>
+      <button class="btn btn-secondary" type="submit">查询</button>
+      <pre id="query-output"></pre>
+    </form>
+  </div>
+  
+  <!-- 4. 违规记录展示 -->
+  <div class="section" id="record-section">
+    <h2>违规记录展示</h2>
+    <button class="btn btn-secondary mb-3" id="fetch-records">查询违规记录</button>
+    <pre id="record-output"></pre>
+  </div>
+  
+  <!-- JavaScript 部分 -->
+  <script>
+    // 使用局域网 IP 192.168.197.224 作为接口地址前缀
+    const BASE_URL = "http://192.168.197.224:8000";
+
+    // 视频流控制
+    function startStream() {
+      const index = document.getElementById('cameraSelect').value;
+      const img = document.getElementById('video-stream');
+      img.src = `${BASE_URL}/examination/?index=${index}`;
+    }
+
+    function stopStream() {
+      document.getElementById('video-stream').src = '';
+    }
+
+    // 获取欢迎信息
+    document.getElementById("fetch-welcome").addEventListener("click", async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/`);
+        const data = await response.json();
+        document.getElementById("welcome-output").textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("welcome-output").textContent = error;
+      }
+    });
+
+    // 查询所有人脸数据
+    document.getElementById("fetch-all-face").addEventListener("click", async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/face/all`);
+        const data = await response.json();
+        document.getElementById("all-face-output").textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("all-face-output").textContent = error;
+      }
+    });
+
+    // 上传人脸数据
+    document.getElementById("face-upload-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = document.getElementById("upload-code").value;
+      const name = document.getElementById("upload-name").value;
+      const fileInput = document.getElementById("upload-file");
+      if(fileInput.files.length === 0){
+        alert("请选择一个文件");
+        return;
+      }
+      const file = fileInput.files[0];
+
+      const formData = new FormData();
+      formData.append("code", code);
+      formData.append("name", name);
+      formData.append("data", file, file.name);
+
+      try {
+        const response = await fetch(`${BASE_URL}/face/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const result = await response.text();
+        document.getElementById("upload-output").textContent = result;
+      } catch (error) {
+        document.getElementById("upload-output").textContent = error;
+      }
+    });
+
+    // 查询人脸数据
+    document.getElementById("face-query-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = document.getElementById("query-code").value;
+      const name = document.getElementById("query-name").value;
+
+      let url = `${BASE_URL}/face/query/?`;
+      if (code) {
+        url += `code=${encodeURIComponent(code)}&`;
+      }
+      if (name) {
+        url += `name=${encodeURIComponent(name)}`;
+      }
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        document.getElementById("query-output").textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("query-output").textContent = error;
+      }
+    });
+
+    // 查询违规记录
+    document.getElementById("fetch-records").addEventListener("click", async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/record/`);
+        const data = await response.json();
+        document.getElementById("record-output").textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("record-output").textContent = error;
+      }
+    });
+  </script>
+</body>
+</html>
