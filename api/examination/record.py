@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile
 from pydantic import BaseModel
 import sqlite3 as sq
 import config
+import base64
 
 app = APIRouter()
 
@@ -18,6 +19,7 @@ class RecordQuery(BaseModel):
     code: str | None = None
     name: str | None = None
     time: str
+    image: str
 
 @app.get('/record/')
 async def record_query() -> list[RecordQuery]:
@@ -32,14 +34,16 @@ async def record_query() -> list[RecordQuery]:
     for item in res:
         type = item[1]
         time = item[3]
+        data = item[-1]
+        image = base64.b64encode(data).decode()
         if type == 'UNKNOWN':
-            ret.append(RecordQuery(type=type, time=time))
+            ret.append(RecordQuery(type=type, time=time, image=image))
         else:
             id = item[2]
             cursor.execute('SELECT code, name FROM face_data WHERE id=?', (id,))
             get = cursor.fetchone()
             code = get[0]
             name = get[1]
-            ret.append(RecordQuery(type=type, code=code, name=name, time=time))
+            ret.append(RecordQuery(type=type, code=code, name=name, time=time, image=image))
     database.close()
     return ret

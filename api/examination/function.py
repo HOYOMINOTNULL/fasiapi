@@ -88,6 +88,10 @@ class Detector():
             if flag:
                 break
         current = datetime.datetime.now()
+        success, bin_img = cv.imencode('.jpg', img)
+        binary_data = bin_img.tobytes()
+        bin_img =  io.BytesIO(binary_data)
+        image_data = bin_img.getvalue()
         if flag:
             face_id = r[0]
             type = r[1]
@@ -97,25 +101,24 @@ class Detector():
                 time = res[-1]
                 time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
                 if time.year != current.year and time.month != current.month and time.day != current.day:
-                    cursor.execute("INSERT INTO examination_res (type, face_id, time) VALUES (?, ?, ?)", 
-                                   (type, face_id, current.strftime("%Y-%m-%d %H:%M:%S")))
+                    cursor.execute("INSERT INTO examination_res (type, face_id, time, image) VALUES (?, ?, ?, ?)", 
+                                   (type, face_id, current.strftime("%Y-%m-%d %H:%M:%S"), image_data))
                     database.commit()
-        else:
-            success, bin_img = cv.imencode('.jpg', img)
-            if success and target:
-                binary_data = bin_img.tobytes()
-                bin_img =  io.BytesIO(binary_data)
-                image_data = bin_img.getvalue()
-                target_encoding = EncodingToStr(target[0])
-                cursor.execute('INSERT INTO face_data (face_type, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?)',
-                               ('UNKNOWN', 'UNKNOWN.jpg', len(image_data), 'jpg', image_data, target_encoding))
+            else:
+                cursor.execute("INSERT INTO examination_res (type, face_id, time, image) VALUES (?, ?, ?, ?)", 
+                                   (type, face_id, current.strftime("%Y-%m-%d %H:%M:%S"), image_data))
                 database.commit()
-                cursor.execute('SELECT id FROM face_data ORDER BY id DESC')
-                res = cursor.fetchone()
-                face_id = res[0]
-                cursor.execute("INSERT INTO examination_res (type, face_id, time) VALUES (?, ?, ?)", 
-                                   ('UNKNOWN', face_id, current.strftime("%Y-%m-%d %H:%M:%S")))
-                database.commit()
+        elif target:
+            target_encoding = EncodingToStr(target[0])
+            cursor.execute('INSERT INTO face_data (face_type, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?)',
+                           ('UNKNOWN', 'UNKNOWN.jpg', len(image_data), 'jpg', image_data, target_encoding))
+            database.commit()
+            cursor.execute('SELECT id FROM face_data ORDER BY id DESC')
+            res = cursor.fetchone()
+            face_id = res[0]
+            cursor.execute("INSERT INTO examination_res (type, face_id, time, image) VALUES (?, ?, ?, ?)", 
+                               ('UNKNOWN', face_id, current.strftime("%Y-%m-%d %H:%M:%S"), image_data))
+            database.commit()
         database.close()
     
     def multi_process(self, invalid_record: list[np.ndarray], invalid_faces: list[list[tuple[int, int, int, int]]], res: list[Any]):

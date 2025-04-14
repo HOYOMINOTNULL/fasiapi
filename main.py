@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from api.facedata.face import app as facedata
 from api.examination.examination import app as examination
+from api.examination.record import app as record
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
@@ -17,6 +18,7 @@ app.add_middleware(
 
 app.include_router(facedata)
 app.include_router(examination)
+app.include_router(record)
 
 app.mount("/", StaticFiles(directory=r".\api\static", html=True), name="static")
 

@@ -89,8 +89,9 @@ async def upload_face(code: str = Form(), name: str = Form(), data: UploadFile =
         if flag:
 
             cursor.execute(
-                f"UPDATE face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?) WHERE id={r[0]}", 
-                save_data)
+                "UPDATE face_data SET face_type = ?, code = ?, name = ?, filename = ?, size = ?, type = ?, data = ?, encoding = ? WHERE id = ?", 
+                (*save_data, r[0])
+            )
         else:
             cursor.execute(
                 'INSERT INTO face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
