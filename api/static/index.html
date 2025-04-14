@@ -250,9 +250,16 @@
     });
 
     /* ----------------------- 视频流模块 ----------------------- */
+ let isStreaming = false;
+ let currentIndex = null;
+
     async function startStream() {
   const video = document.getElementById('video-stream');
   const index = document.getElementById('cameraSelect').value;
+
+  if (isStreaming && currentIndex === index) {
+    return;
+  }
 
   try {
     const response = await fetch(`${BASE_URL}/examination/?index=${index}`);
@@ -263,10 +270,14 @@
       alert("未找到该摄像头");
         video.src = blackImageDataURL;
         video.style.display = 'block';
+        isStreaming = false;
+        currentIndex = null;
     } else {
       // 正常加载视频流
       video.src = `${BASE_URL}/examination/?index=${index}`;
       video.style.display = 'block';
+      isStreaming = true;
+      currentIndex = index;
     }
   } catch (error) {
     console.error("启动视频流出错：", error);
@@ -279,6 +290,8 @@
       const video = document.getElementById('video-stream');
       video.src = blackImageDataURL;
       video.style.display = 'block';
+      isStreaming = false;
+      currentIndex = null;
     }
 
     /* ----------------------- 人脸数据管理模块 ----------------------- */
