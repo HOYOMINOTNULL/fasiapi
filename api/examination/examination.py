@@ -32,6 +32,7 @@ async def frame(detr: myfunc.Detector, cap: cv.VideoCapture, request: Request):
 
 @app.get('/examination/')
 async def main_examination(request: Request, index: int = Query(default=0, ge=0, lt=len(config.cameras))):
+    print("lslsls")
     cap = cv.VideoCapture(config.cameras[index])
     detr = myfunc.Detector(config.YOLO_MODEL_PATH, config.FACE_DB_PATH)
     return StreamingResponse(frame(detr, cap, request), media_type='multipart/x-mixed-replace; boundary=frame')
