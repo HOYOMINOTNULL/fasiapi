@@ -4,7 +4,7 @@ import uvicorn
 from api.facedata.face import app as facedata
 from api.examination.examination import app as examination
 from fastapi.staticfiles import StaticFiles
-
+from api.examination.record import app as record
 app = FastAPI()
 
 app.add_middleware(
@@ -17,9 +17,11 @@ app.add_middleware(
 
 app.include_router(facedata)
 app.include_router(examination)
+app.include_router(record)
 
 app.mount("/", StaticFiles(directory=r".\api\static", html=True), name="static")
 
 
 if __name__ == '__main__':
-    uvicorn.run(app="main:app", host='0.0.0.0', port=8000, workers=2)
+    #uvicorn.run(app="main:app", host='0.0.0.0', port=8000, workers=2)
+    "fastapi run main.py"

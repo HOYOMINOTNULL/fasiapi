@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, UploadFile
 from pydantic import BaseModel
 import sqlite3 as sq
@@ -15,8 +17,8 @@ examination_res表结构
 
 class RecordQuery(BaseModel):
     type: str
-    code: str | None = None
-    name: str | None = None
+    code: Optional[str] = None
+    name: Optional[str] = None
     time: str
 
 @app.get('/record/')
@@ -26,6 +28,7 @@ async def record_query() -> list[RecordQuery]:
     '''
     ret = []
     database = sq.connect(config.FACE_DB_PATH)
+    print("接收到record")
     cursor = database.cursor()
     cursor.execute('SELECT * FROM examination_res ORDER BY time DESC')
     res = cursor.fetchall()
