@@ -24,7 +24,6 @@ def  StrToEncoding(s: str) -> np.ndarray:
 class Detector():
     def __init__(self, model_path: str = config.YOLO_MODEL_PATH, data_path: str = config.FACE_DB_PATH):
         self.model = YOLO(model_path)
-        self.conf_threshold = 0.25  # 进一步降低置信度阈值
         self.iou_threshold = 0.45  # 调整NMS阈值
         self.input_size = 640
         self.invalid_cls = 1 #非法标签
@@ -33,10 +32,10 @@ class Detector():
 
 
 
-    def examine(self, image: np.ndarray) -> np.ndarray:
+    def examine(self, image: np.ndarray, conf_threshold: float) -> np.ndarray:
         trans = cv.cvtColor(image, cv.COLOR_BGR2RGB) #预处理
         res = self.model.predict(trans, imgsz=self.input_size,
-                    conf=self.conf_threshold,
+                    conf=conf_threshold,
                     iou=self.iou_threshold,
                     augment=True,
                     verbose=False)

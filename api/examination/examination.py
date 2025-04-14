@@ -6,6 +6,8 @@ import cv2 as cv
 
 app = APIRouter()
 
+conf_threshold = 0.5
+
 async def frame(detr: myfunc.Detector, cap: cv.VideoCapture, request: Request):
     if not cap.isOpened():
         print('ERROR: Can\'t open the camera')
@@ -18,7 +20,7 @@ async def frame(detr: myfunc.Detector, cap: cv.VideoCapture, request: Request):
         if not ret:
             print('ERROR: Can\'t get image from the camera')
             continue
-        res = detr.examine(image)
+        res = detr.examine(image, conf_threshold)
         success, bin_img = cv.imencode('.jpg', res)
         if success:
             binary_data = bin_img.tobytes()
@@ -35,3 +37,8 @@ async def main_examination(request: Request, index: int = Query(default=0, ge=0,
     cap = cv.VideoCapture(config.cameras[index])
     detr = myfunc.Detector(config.YOLO_MODEL_PATH, config.FACE_DB_PATH)
     return StreamingResponse(frame(detr, cap, request), media_type='multipart/x-mixed-replace; boundary=frame')
+
+@app.post('/examination/confidence/')
+async def change_conf(v: float = Query(ge=0, le=1)):
+    global conf_threshold
+    conf_threshold = change_conf
