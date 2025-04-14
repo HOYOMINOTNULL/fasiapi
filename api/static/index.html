@@ -87,6 +87,9 @@
     <a href="#" data-target="record-section" class="nav-link">
       <i class="bi bi-clipboard-data"></i> 违规记录展示
     </a>
+    <a href="#" data-target="chat-section" class="nav-link">
+      <i class="bi bi-chat-left-text"></i> 智能聊天机器人
+    </a>
   </nav>
 
   <!-- 主体内容区域 -->
@@ -167,13 +170,45 @@
       <button class="btn btn-secondary mb-3" id="fetch-records">查询违规记录</button>
       <pre id="record-output"></pre>
     </div>
+
+    <!-- 智能聊天机器人模块 -->
+    <div id="chat-section" class="section">
+      <h1 class="mt-4 text-center">智能聊天机器人</h1>
+      <div class="container" style="max-width: 800px;">
+        <!-- 聊天记录区域 -->
+        <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f8f9fa;"></div>
+        <!-- 输入区域 -->
+        <div class="mt-3">
+          <div class="input-group">
+            <input id="chat-input" type="text" class="form-control" placeholder="请输入你的问题...">
+            <button id="send-chat" class="btn btn-primary">发送</button>
+          </div>
+        </div>
+        <!-- 示例代码区域 -->
+        <div class="mt-3">
+          <h5>示例命令</h5>
+          <pre><code>curl http://localhost:11434/api/generate -d '{
+  "model": "hf.co/your-username/DeepSeek-R1-Construction-Safety-GGUF",
+  "prompt": "为什么工地上要戴安全帽？"
+}'</code></pre>
+        </div>
+        <div class="mt-3">
+          <h5>示例响应</h5>
+          <pre><code>{
+  "response": "安全帽能保护工人免受高空坠物或其他意外事故造成的头部伤害，是工地安全的重要装备。",
+  ...
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- JavaScript：包含功能及导航控制 -->
   <script>
     const BASE_URL = "http://127.0.0.1:8000";
     // 定义用于无视频流显示的黑屏数据URL（640x480 黑色 PNG 图片）
-    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
+    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
 
     // 导航栏点击事件：切换模块显示
     document.querySelectorAll('.sidebar a').forEach(link => {
@@ -194,12 +229,10 @@
       const video = document.getElementById('video-stream');
       const index = document.getElementById('cameraSelect').value;
       video.src = `${BASE_URL}/examination/?index=${index}`;
-      // 确保视频区域显示
       video.style.display = 'block';
     }
     function stopStream() {
       const video = document.getElementById('video-stream');
-      // 设置为黑屏数据URL，避免出现断图标
       video.src = blackImageDataURL;
       video.style.display = 'block';
     }
@@ -272,6 +305,41 @@
         document.getElementById("record-output").textContent = JSON.stringify(data, null, 2);
       } catch (error) {
         document.getElementById("record-output").textContent = error;
+      }
+    });
+
+    /* ----------------------- 智能聊天机器人模块 ----------------------- */
+    document.getElementById("send-chat").addEventListener("click", async () => {
+      const input = document.getElementById("chat-input");
+      const prompt = input.value.trim();
+      if (!prompt) return;
+      const chatBox = document.getElementById("chat-box");
+
+      // 显示用户消息
+      const userMsg = document.createElement("div");
+      userMsg.className = "text-end mb-2";
+      userMsg.innerHTML = `<strong>用户:</strong> ${prompt}`;
+      chatBox.appendChild(userMsg);
+      input.value = "";
+
+      // 调用智能聊天接口
+      try {
+        const response = await fetch("http://localhost:11434/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "hf.co/your-username/DeepSeek-R1-Construction-Safety-GGUF",
+            prompt: prompt
+          })
+        });
+        const data = await response.json();
+        const replyMsg = document.createElement("div");
+        replyMsg.className = "text-start mb-2";
+        replyMsg.innerHTML = `<strong>机器人:</strong> ${data.response || "无回复"}`;
+        chatBox.appendChild(replyMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (error) {
+        console.error("聊天机器人请求错误:", error);
       }
     });
   </script>
