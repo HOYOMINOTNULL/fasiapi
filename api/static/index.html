@@ -130,7 +130,19 @@
       <h1 class="mt-4">人脸数据管理</h1>
       <div class="mb-4">
         <button class="btn btn-secondary" id="fetch-all-face">查询全部人脸数据</button>
-        <pre id="all-face-output"></pre>
+        <!-- 使用表格展示查询到的人脸数据 -->
+        <table class="table table-bordered mt-3" id="face-table">
+          <thead>
+            <tr>
+              <th>工号 (code)</th>
+              <th>姓名 (name)</th>
+              <th>图片</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 通过 JS 动态插入数据 -->
+          </tbody>
+        </table>
       </div>
       <form id="face-upload-form" class="mb-4">
         <h4>上传人脸数据</h4>
@@ -164,11 +176,25 @@
       </form>
     </div>
 
-    <!-- 违规记录展示模块 -->
+    <!-- 违规记录展示模块，使用表格展示 -->
     <div id="record-section" class="section">
       <h1 class="mt-4">违规记录展示</h1>
       <button class="btn btn-secondary mb-3" id="fetch-records">查询违规记录</button>
-      <pre id="record-output"></pre>
+      <!-- 表格展示违规记录 -->
+      <table class="table table-bordered" id="record-table">
+        <thead>
+          <tr>
+            <th>图片</th>
+            <th>时间</th>
+            <th>姓名</th>
+            <th>ID</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 违规记录数据由 JavaScript 动态插入 -->
+        </tbody>
+      </table>
     </div>
 
     <!-- 智能聊天机器人模块 -->
@@ -201,14 +227,13 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- JavaScript：包含功能及导航控制 -->
   <script>
     const BASE_URL = "http://127.0.0.1:8000";
     // 定义用于无视频流显示的黑屏数据URL（640x480 黑色 PNG 图片）
-    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
+    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
 
     // 导航栏点击事件：切换模块显示
     document.querySelectorAll('.sidebar a').forEach(link => {
@@ -225,27 +250,59 @@
     });
 
     /* ----------------------- 视频流模块 ----------------------- */
-    function startStream() {
-      const video = document.getElementById('video-stream');
-      const index = document.getElementById('cameraSelect').value;
+    async function startStream() {
+  const video = document.getElementById('video-stream');
+  const index = document.getElementById('cameraSelect').value;
+
+  try {
+    const response = await fetch(`${BASE_URL}/examination/?index=${index}`);
+    // 如果返回 422，认为未找到该摄像头
+    if (response.status === 422) {
+      // 显示提示信息，可以通过在页面上设置提示区域、弹窗、或直接替换视频区域的内容
+      video.style.display = 'none';
+      alert("未找到该摄像头");
+        video.src = blackImageDataURL;
+        video.style.display = 'block';
+    } else {
+      // 正常加载视频流
       video.src = `${BASE_URL}/examination/?index=${index}`;
       video.style.display = 'block';
     }
-    function stopStream() {
+  } catch (error) {
+    console.error("启动视频流出错：", error);
+    alert("视频流启动出错，请检查网络或摄像头连接。");
+  }
+}
+
+
+    async function stopStream() {
       const video = document.getElementById('video-stream');
       video.src = blackImageDataURL;
       video.style.display = 'block';
     }
 
     /* ----------------------- 人脸数据管理模块 ----------------------- */
-    // 查询全部人脸数据
+    // 查询全部人脸数据，并在表格中展示
     document.getElementById("fetch-all-face").addEventListener("click", async () => {
       try {
         const response = await fetch(`${BASE_URL}/face/all`);
         const data = await response.json();
-        document.getElementById("all-face-output").textContent = JSON.stringify(data, null, 2);
+        // 假设 data 为数组，每个元素包含 code, name, image (Base64 编码的 JPG 图片)
+        const tableBody = document.querySelector("#face-table tbody");
+        tableBody.innerHTML = "";  // 清空旧数据
+        data.forEach(item => {
+          // 拼接 Base64 图片的 data URL，假设格式为 JPG
+          const imgSrc = "data:image/jpeg;base64," + item.image;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.code}</td>
+            <td>${item.name}</td>
+            <td><img src="${imgSrc}" alt="人脸图片" style="max-width:100px; max-height:100px;"></td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        document.getElementById("all-face-output").textContent = error;
+        console.error("查询全部人脸数据出错：", error);
       }
     });
 
@@ -276,7 +333,7 @@
       }
     });
 
-    // 查询人脸数据
+    // 查询人脸数据（条件查询保持原有功能）
     document.getElementById("face-query-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = document.getElementById("query-code").value;
@@ -302,9 +359,24 @@
       try {
         const response = await fetch(`${BASE_URL}/record/`);
         const data = await response.json();
-        document.getElementById("record-output").textContent = JSON.stringify(data, null, 2);
+        // 假设 data 为数组，每个元素为一个违规记录，字段包括 image, time, name, id, type
+        const tableBody = document.querySelector("#record-table tbody");
+        tableBody.innerHTML = ""; // 清空之前内容
+        data.forEach(record => {
+          // 将 Base64 图片拼接成 data URL，默认格式为 JPG
+          const imgSrc = "data:image/jpg;base64," + record.image;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${imgSrc}" alt="违规记录图片" style="max-width:100px; max-height:100px;"></td>
+            <td>${record.time}</td>
+            <td>${record.name}</td>
+            <td>${record.code}</td>
+            <td>${record.type}</td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        document.getElementById("record-output").textContent = error;
+        console.error("获取违规记录出错：", error);
       }
     });
 

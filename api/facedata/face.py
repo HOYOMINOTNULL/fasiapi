@@ -44,6 +44,7 @@ async def all_face_data() -> list[FaceData]:
     cursor = database.cursor()
     cursor.execute('SELECT * FROM face_data')
     res = cursor.fetchone()
+
     while res:
         type = res[1]
         if type == 'KNOWN':
