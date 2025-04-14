@@ -9,6 +9,7 @@ import datetime
 import config
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 def EncodingToStr(encoding: np.ndarray) -> str:
     encoding_list = encoding.tolist()
@@ -51,7 +52,12 @@ class Detector():
                     cropped = raw_image[y1:y2, x1:x2]
                     invalid_record.append(cropped)
         invalid_faces = self.face_recognize(invalid_record)
-        self.multi_process(invalid_record, invalid_faces)
+        database = sq.connect(self.database_path)
+        cursor = database.cursor()
+        cursor.execute('SELECT id, face_type, encoding FROM face_data')
+        res = cursor.fetchall()
+        database.close()
+        self.multi_process(invalid_record, invalid_faces, res)
         return image
     
     def face_recognize(self, captures: list[np.ndarray]) -> list[list[tuple[int, int, int, int]]]:
@@ -64,7 +70,7 @@ class Detector():
             ret.append(locations)
         return ret
     
-    def record(self, img: np.ndarray, locations: list[tuple[int, int, int, int]]):
+    def record(self, img: np.ndarray, locations: list[tuple[int, int, int, int]], res: list[Any]):
         '''
         将违规人脸img的相关信息存入违规记录数据库，一人一天只记一次违规
         如果该人脸第一次出现，则将他以UNKONW的type存入人脸数据库中
@@ -73,8 +79,6 @@ class Detector():
         target = fr.face_encodings(img, known_face_locations=locations)
         database = sq.connect(self.database_path)
         cursor = database.cursor()
-        cursor.execute('SELECT id, face_type, encoding FROM face_data')
-        res = cursor.fetchall()
         flag = False
         for r in res:
             encode = StrToEncoding(r[-1])
@@ -114,9 +118,9 @@ class Detector():
                 database.commit()
         database.close()
     
-    def multi_process(self, invalid_record: list[np.ndarray], invalid_faces: list[list[tuple[int, int, int, int]]]):
+    def multi_process(self, invalid_record: list[np.ndarray], invalid_faces: list[list[tuple[int, int, int, int]]], res: list[Any]):
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(self.record, invalid_record[i], invalid_faces[i]) for i in range(len(invalid_faces))]
+            futures = [executor.submit(self.record, invalid_record[i], invalid_faces[i], res) for i in range(len(invalid_faces))]
             for future in futures:
                 try:
                     future.result()
