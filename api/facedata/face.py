@@ -1,9 +1,9 @@
 from typing import Optional
-
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, UploadFile, File, Form
 from pydantic import BaseModel
 import sqlite3 as sq
 import io
+import base64
 import api.examination.function as myfunc
 import cv2 as cv
 import numpy as np
@@ -19,7 +19,7 @@ class FaceQuery(BaseModel):
 class FaceData(BaseModel):
     code: str
     name: str
-    data: UploadFile
+    image: str
 
 '''
 face_data表结构:
@@ -49,31 +49,29 @@ async def all_face_data() -> list[FaceData]:
         if type == 'KNOWN':
             code = res[2]
             name = res[3]
-            filename = res[4]
-            size = res[5]
-            data = io.BytesIO(res[7])
-            ret.append(FaceData(code, name, UploadFile(data, size=size, filename=filename)))
+            data = res[7]
+            image = base64.b64encode(data).decode()
+            ret.append(FaceData(code=code, name=name, image=image))
         res = cursor.fetchone()
     database.close()
     return ret
 
 @app.post('/face/upload')
-async def upload_face(data: FaceData):
+async def upload_face(code: str = Form(), name: str = Form(), data: UploadFile = File()):
     '''
     向数据库上传人脸数据，工号code，姓名name为必须
     '''
-    filename = data.data.filename
+    filename = data.filename
     index = filename.find('.')
     type = filename[index+1:]
     dtr = myfunc.Detector()
-    file = io.BytesIO(data.data.file)
-    file = file.read()
-    np_arr = np.frombuffer(file, np.uint8)
+    bytes_file = await data.read()
+    np_arr = np.frombuffer(bytes_file, np.uint8)
     img = cv.imdecode(np_arr, cv.IMREAD_COLOR)
-    cropped_img = dtr.face_recognize([img])
-    if cropped_img:
-        img = cropped_img[0]
-        target = fr.face_encodings(img)
+    location = dtr.face_recognize([img])
+    if location:
+        img = img.astype(np.uint8)
+        target = fr.face_encodings(img, known_face_locations=location[0])
         database = sq.connect(config.FACE_DB_PATH)
         cursor = database.cursor()
         cursor.execute("SELECT id, data FROM face_data WHERE type='UNKNOWN'")
@@ -87,17 +85,20 @@ async def upload_face(data: FaceData):
             if flag:
                 break
         target_encoding = myfunc.EncodingToStr(target[0])
-        save_data = ('KNOWN', data.code, data.name, filename, len(data.data.file), type, data.data.file, target_encoding)
+        save_data = ('KNOWN', code, name, filename, len(bytes_file), type, bytes_file, target_encoding)
         if flag:
+
             cursor.execute(
                 f"UPDATE face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?) WHERE id={r[0]}", 
                 save_data)
         else:
             cursor.execute(
-                'INSERT INTO face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 save_data)
         database.commit()
         database.close()
+    else:
+        return {'message': 'There\'s no face'}
 
 @app.get('/face/query/')
 async def query_face_data(query: FaceQuery) -> Optional[FaceData]:
@@ -116,10 +117,9 @@ async def query_face_data(query: FaceQuery) -> Optional[FaceData]:
         if not res:
             return None
         name = res[3]
-        filename = res[4]
-        size = res[5]
         data = res[7]
-        ret = FaceData(query.code, name, UploadFile(data, size=size, filename=filename))
+        image = base64.b64encode(data).decode()
+        ret = FaceData(code=query.code, name=name, image=image)
         database.close()
         return ret
     else:
@@ -131,9 +131,8 @@ async def query_face_data(query: FaceQuery) -> Optional[FaceData]:
         if not res:
             return None
         code = res[2]
-        filename = res[4]
-        size = res[5]
         data = res[7]
-        ret = FaceData(code, query.name, UploadFile(data, size=size, filename=filename))
+        image = base64.b64encode(data).decode()
+        ret = FaceData(code=code, name=query.name, image=image)
         database.close()
         return ret

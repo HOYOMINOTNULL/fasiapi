@@ -7,6 +7,8 @@ import json
 import sqlite3 as sq
 import datetime
 import config
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 def EncodingToStr(encoding: np.ndarray) -> str:
     encoding_list = encoding.tolist()
@@ -49,32 +51,29 @@ class Detector():
                     cropped = raw_image[y1:y2, x1:x2]
                     invalid_record.append(cropped)
         invalid_faces = self.face_recognize(invalid_record)
-        for face in invalid_faces:
-            self.record(face)
+        self.multi_process(invalid_record, invalid_faces)
         return image
     
-    def face_recognize(self, captures: list[np.ndarray]) -> list[np.ndarray]:
+    def face_recognize(self, captures: list[np.ndarray]) -> list[list[tuple[int, int, int, int]]]:
         '''
-        从输入的图片中识别人脸并裁剪，返回
+        从输入的图片中识别人脸，返回人脸在图片中的位置
         '''
         ret = []
         for capture in captures:
             locations = fr.face_locations(capture)
-            for location in locations:
-                face_cropped = capture[location[0]:location[2], location[3]:location[1]]
-                ret.append(face_cropped)
+            ret.append(locations)
         return ret
     
-    def record(self, img: np.ndarray):
+    def record(self, img: np.ndarray, locations: list[tuple[int, int, int, int]]):
         '''
         将违规人脸img的相关信息存入违规记录数据库，一人一天只记一次违规
         如果该人脸第一次出现，则将他以UNKONW的type存入人脸数据库中
         '''
         img = img.astype(np.uint8)
-        target = fr.face_encodings(img)
+        target = fr.face_encodings(img, known_face_locations=locations)
         database = sq.connect(self.database_path)
         cursor = database.cursor()
-        cursor.execute('SELECT * FROM face_data')
+        cursor.execute('SELECT id, face_type, encoding FROM face_data')
         res = cursor.fetchall()
         flag = False
         for r in res:
@@ -114,6 +113,15 @@ class Detector():
                                    ('UNKNOWN', face_id, current.strftime("%Y-%m-%d %H:%M:%S")))
                 database.commit()
         database.close()
+    
+    def multi_process(self, invalid_record: list[np.ndarray], invalid_faces: list[list[tuple[int, int, int, int]]]):
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(self.record, invalid_record[i], invalid_faces[i]) for i in range(len(invalid_faces))]
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f'Process error: {e}')
 
 if __name__ == '__main__':
     detr = Detector('best.pt', 'database.db')
