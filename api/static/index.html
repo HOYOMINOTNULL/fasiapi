@@ -17,6 +17,7 @@
     body {
       display: flex;
       font-family: Arial, sans-serif;
+      position: relative;
     }
     .sidebar {
       width: 240px;
@@ -44,6 +45,7 @@
       width: calc(100% - 240px);
       height: 100vh;
       overflow: hidden;
+      position: relative;
     }
     /* 模块区域，只显示当前模块 */
     .section {
@@ -72,6 +74,21 @@
     select, button {
       margin-right: 10px;
     }
+    /* 预警区域样式 */
+    #alert-box {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      padding: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: green;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      z-index: 100;
+      transform: translateX(-18px);
+    }
   </style>
 </head>
 <body>
@@ -94,6 +111,9 @@
 
   <!-- 主体内容区域 -->
   <div class="main">
+    <!-- 在视频流区域右边添加预警文字，初始只显示在视频流模块中 -->
+    <div id="alert-box">暂无安全隐患</div>
+
     <!-- 视频流展示模块 -->
     <div id="video-section" class="section active">
       <h1 class="mt-4 text-center">视频流展示</h1>
@@ -178,18 +198,6 @@
           <input type="text" class="form-control" id="query-name">
         </div>
         <button class="btn btn-secondary" type="submit">查询</button>
-         <table class="table table-bordered mt-99999" id="face-table-query">
-          <thead>
-            <tr>
-              <th>工号 (code)</th>
-              <th>姓名 (name)</th>
-              <th>图片</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- 数据将由 JS 动态插入 -->
-          </tbody>
-        </table>
       </form>
     </div>
 
@@ -227,21 +235,9 @@
             <button id="send-chat" class="btn btn-primary">发送</button>
           </div>
         </div>
-        <!-- 示例代码区域 -->
-        <div class="mt-3">
-          <h5>示例命令</h5>
-          <pre><code>curl http://localhost:11434/api/generate -d '{
-  "model": "myllama",
-  "prompt": "为什么工地上要戴安全帽？"
-}'</code></pre>
-        </div>
-        <div class="mt-3">
-          <h5>示例响应</h5>
-          <pre><code>{
-  "response": "安全帽能保护工人免受高空坠物或其他意外事故造成的头部伤害，是工地安全的重要装备。",
-  ...
-}</code></pre>
-        </div>
+
+
+
       </div>
     </div>
   </div>
@@ -249,10 +245,42 @@
   <!-- JavaScript：包含功能及导航控制 -->
   <script>
     const BASE_URL = "http://127.0.0.1:8000";
-    // 定义用于无视频流显示的黑屏数据URL（640x480 黑色 PNG 图片）
+    // 黑屏图片数据URL
     const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
 
-    // 导航栏点击事件：切换模块显示
+    // 预警区域检测，每隔0.5秒发起 GET 请求到“examine/alert”
+    let lastAlertState = null;
+    setInterval(async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/examination/alert`);
+        const text = await response.text();
+        const state = text.trim();
+        const alertBox = document.getElementById("alert-box");
+        // 仅在视频流模块显示时，预警框显示
+        if (document.getElementById("video-section").classList.contains("active")) {
+          alertBox.style.display = "block";
+          if (state === "1") {
+            alertBox.style.color = "red";
+            alertBox.textContent = "请注意佩戴头盔";
+            if (lastAlertState !== "1") {
+              const audio = new Audio("static/alert.mp3"); // 请将音频文件放在 static 文件夹下
+              audio.play();
+            }
+            lastAlertState = "1";
+          } else if (state === "0") {
+            alertBox.style.color = "green";
+            alertBox.textContent = "暂无安全隐患";
+            lastAlertState = "0";
+          }
+        } else {
+          alertBox.style.display = "none";
+        }
+      } catch (e) {
+        console.error("预警请求出错：", e);
+      }
+    }, 500);
+
+    // 导航栏点击事件：切换模块显示，同时仅视频流模块显示预警框
     document.querySelectorAll('.sidebar a').forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
@@ -263,6 +291,13 @@
           section.classList.remove('active');
         });
         document.getElementById(target).classList.add('active');
+        // 如果当前不是视频流模块，则隐藏预警框
+        if (target !== "video-section") {
+          document.getElementById("alert-box").style.display = "none";
+        }
+        else{
+          document.getElementById("alert-box").style.display = "block";
+        }
       });
     });
 
@@ -272,7 +307,6 @@
       const index = document.getElementById('cameraSelect').value;
       try {
         const response = await fetch(`${BASE_URL}/examination/?index=${index}`);
-        // 如果返回 422，认为未找到该摄像头
         if (response.status === 422) {
           video.style.display = 'none';
           alert("未找到该摄像头");
@@ -295,7 +329,6 @@
     }
 
     /* ----------------------- 人脸数据管理模块 ----------------------- */
-    // 查询全部人脸数据，并在表格中展示
     document.getElementById("fetch-all-face").addEventListener("click", async () => {
       try {
         const response = await fetch(`${BASE_URL}/face/all`);
@@ -317,7 +350,6 @@
       }
     });
 
-    // 上传人脸数据
     document.getElementById("face-upload-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = document.getElementById("upload-code").value;
@@ -344,7 +376,7 @@
       }
     });
 
-    // 条件查询人脸数据，并在表格中展示（格式与查询全部数据相同）
+    // 条件查询人脸数据，并在表格中展示，格式与查询全部数据相同
     document.getElementById("face-query-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = document.getElementById("query-code").value;
@@ -359,7 +391,7 @@
       try {
         const response = await fetch(url);
         const data = await response.json();
-        const tableBody = document.querySelector("#face-table-query tbody");
+        const tableBody = document.querySelector("#face-table tbody");
         tableBody.innerHTML = "";
         data.forEach(item => {
           const imgSrc = "data:image/jpeg;base64," + item.image;
@@ -402,7 +434,7 @@
 
     /* ----------------------- 智能聊天机器人模块 ----------------------- */
     function filterResponse(text) {
-      return text.replace(/[A-Za-z_\-#]/g, '');
+      return text.replace(/[A-Za-z#]/g, '');
     }
 
     document.getElementById("send-chat").addEventListener("click", async () => {
@@ -425,7 +457,7 @@
       chatBox.appendChild(replyMsg);
 
       try {
-        const response = await fetch("http://9f62bd1.r9.cpolar.top/api/generate", {
+        const response = await fetch("http://192.168.175.195:11434/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
