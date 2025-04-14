@@ -114,8 +114,14 @@
           <div class="col-md-9 text-center">
             <img id="video-stream" class="video-stream" src="http://127.0.0.1:8000/examination/?index=0" alt="视频流">
           </div>
+          <div class="mt-4">
+            <label for="confidence-slider" class="form-label">
+              识别置信度阈值：<span id="confidence-value">0.5</span>
+            </label>
+            <input type="range" class="form-range" id="confidence-slider" min="0.1" max="1" step="0.01" value="0.5">
+          </div>
         </div>
-        <!-- 按钮区域：位于视频流下方，按钮中间有空白 -->
+        <!-- 按钮区域：位于视频流下方 -->
         <div class="row mt-4">
           <div class="col text-center">
             <button class="btn btn-success me-3" onclick="startStream()">开始视频流</button>
@@ -140,7 +146,7 @@
             </tr>
           </thead>
           <tbody>
-            <!-- 通过 JS 动态插入数据 -->
+            <!-- 数据将由 JS 动态插入 -->
           </tbody>
         </table>
       </div>
@@ -162,7 +168,7 @@
         <pre id="upload-output"></pre>
       </form>
       <form id="face-query-form" class="mb-4">
-        <h4>查询人脸数据</h4>
+        <h4>条件查询人脸数据</h4>
         <div class="mb-3">
           <label for="query-code" class="form-label">按工号 (code)：</label>
           <input type="text" class="form-control" id="query-code">
@@ -172,11 +178,22 @@
           <input type="text" class="form-control" id="query-name">
         </div>
         <button class="btn btn-secondary" type="submit">查询</button>
-        <pre id="query-output"></pre>
+         <table class="table table-bordered mt-99999" id="face-table-query">
+          <thead>
+            <tr>
+              <th>工号 (code)</th>
+              <th>姓名 (name)</th>
+              <th>图片</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 数据将由 JS 动态插入 -->
+          </tbody>
+        </table>
       </form>
     </div>
 
-    <!-- 违规记录展示模块，使用表格展示 -->
+    <!-- 违规记录展示模块 -->
     <div id="record-section" class="section">
       <h1 class="mt-4">违规记录展示</h1>
       <button class="btn btn-secondary mb-3" id="fetch-records">查询违规记录</button>
@@ -192,7 +209,7 @@
           </tr>
         </thead>
         <tbody>
-          <!-- 违规记录数据由 JavaScript 动态插入 -->
+          <!-- 数据将由 JS 动态插入 -->
         </tbody>
       </table>
     </div>
@@ -214,7 +231,7 @@
         <div class="mt-3">
           <h5>示例命令</h5>
           <pre><code>curl http://localhost:11434/api/generate -d '{
-  "model": "hf.co/your-username/DeepSeek-R1-Construction-Safety-GGUF",
+  "model": "myllama",
   "prompt": "为什么工地上要戴安全帽？"
 }'</code></pre>
         </div>
@@ -233,7 +250,7 @@
   <script>
     const BASE_URL = "http://127.0.0.1:8000";
     // 定义用于无视频流显示的黑屏数据URL（640x480 黑色 PNG 图片）
-    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
+    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
 
     // 导航栏点击事件：切换模块显示
     document.querySelectorAll('.sidebar a').forEach(link => {
@@ -254,37 +271,25 @@
  let currentIndex = null;
 
     async function startStream() {
-  const video = document.getElementById('video-stream');
-  const index = document.getElementById('cameraSelect').value;
-
-  if (isStreaming && currentIndex === index) {
-    return;
-  }
-
-  try {
-    const response = await fetch(`${BASE_URL}/examination/?index=${index}`);
-    // 如果返回 422，认为未找到该摄像头
-    if (response.status === 422) {
-      // 显示提示信息，可以通过在页面上设置提示区域、弹窗、或直接替换视频区域的内容
-      video.style.display = 'none';
-      alert("未找到该摄像头");
-        video.src = blackImageDataURL;
-        video.style.display = 'block';
-        isStreaming = false;
-        currentIndex = null;
-    } else {
-      // 正常加载视频流
-      video.src = `${BASE_URL}/examination/?index=${index}`;
-      video.style.display = 'block';
-      isStreaming = true;
-      currentIndex = index;
+      const video = document.getElementById('video-stream');
+      const index = document.getElementById('cameraSelect').value;
+      try {
+        const response = await fetch(`${BASE_URL}/examination/?index=${index}`);
+        // 如果返回 422，认为未找到该摄像头
+        if (response.status === 422) {
+          video.style.display = 'none';
+          alert("未找到该摄像头");
+          video.src = blackImageDataURL;
+          video.style.display = 'block';
+        } else {
+          video.src = `${BASE_URL}/examination/?index=${index}`;
+          video.style.display = 'block';
+        }
+      } catch (error) {
+        console.error("启动视频流出错：", error);
+        alert("视频流启动出错，请检查网络或摄像头连接。");
+      }
     }
-  } catch (error) {
-    console.error("启动视频流出错：", error);
-    alert("视频流启动出错，请检查网络或摄像头连接。");
-  }
-}
-
 
     async function stopStream() {
       const video = document.getElementById('video-stream');
@@ -300,11 +305,9 @@
       try {
         const response = await fetch(`${BASE_URL}/face/all`);
         const data = await response.json();
-        // 假设 data 为数组，每个元素包含 code, name, image (Base64 编码的 JPG 图片)
         const tableBody = document.querySelector("#face-table tbody");
-        tableBody.innerHTML = "";  // 清空旧数据
+        tableBody.innerHTML = "";
         data.forEach(item => {
-          // 拼接 Base64 图片的 data URL，假设格式为 JPG
           const imgSrc = "data:image/jpeg;base64," + item.image;
           const row = document.createElement("tr");
           row.innerHTML = `
@@ -346,7 +349,7 @@
       }
     });
 
-    // 查询人脸数据（条件查询保持原有功能）
+    // 条件查询人脸数据，并在表格中展示（格式与查询全部数据相同）
     document.getElementById("face-query-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = document.getElementById("query-code").value;
@@ -361,9 +364,20 @@
       try {
         const response = await fetch(url);
         const data = await response.json();
-        document.getElementById("query-output").textContent = JSON.stringify(data, null, 2);
+        const tableBody = document.querySelector("#face-table-query tbody");
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+          const imgSrc = "data:image/jpeg;base64," + item.image;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.code}</td>
+            <td>${item.name}</td>
+            <td><img src="${imgSrc}" alt="人脸图片" style="max-width:100px; max-height:100px;"></td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        document.getElementById("query-output").textContent = error;
+        console.error("条件查询人脸数据出错：", error);
       }
     });
 
@@ -372,11 +386,9 @@
       try {
         const response = await fetch(`${BASE_URL}/record/`);
         const data = await response.json();
-        // 假设 data 为数组，每个元素为一个违规记录，字段包括 image, time, name, id, type
         const tableBody = document.querySelector("#record-table tbody");
-        tableBody.innerHTML = ""; // 清空之前内容
+        tableBody.innerHTML = "";
         data.forEach(record => {
-          // 将 Base64 图片拼接成 data URL，默认格式为 JPG
           const imgSrc = "data:image/jpg;base64," + record.image;
           const row = document.createElement("tr");
           row.innerHTML = `
@@ -394,37 +406,93 @@
     });
 
     /* ----------------------- 智能聊天机器人模块 ----------------------- */
+    function filterResponse(text) {
+      return text.replace(/[A-Za-z_\-#]/g, '');
+    }
+
     document.getElementById("send-chat").addEventListener("click", async () => {
       const input = document.getElementById("chat-input");
-      const prompt = input.value.trim();
-      if (!prompt) return;
+      const promptText = input.value.trim();
+      if (!promptText) return;
       const chatBox = document.getElementById("chat-box");
 
       // 显示用户消息
       const userMsg = document.createElement("div");
       userMsg.className = "text-end mb-2";
-      userMsg.innerHTML = `<strong>用户:</strong> ${prompt}`;
+      userMsg.innerHTML = `<strong>用户:</strong> ${promptText}`;
       chatBox.appendChild(userMsg);
       input.value = "";
 
-      // 调用智能聊天接口
+      // 创建用于显示回复的容器
+      const replyMsg = document.createElement("div");
+      replyMsg.className = "text-start mb-2";
+      replyMsg.innerHTML = `<strong>机器人:</strong> `;
+      chatBox.appendChild(replyMsg);
+
       try {
-        const response = await fetch("http://localhost:11434/api/generate", {
+        const response = await fetch("http://9f62bd1.r9.cpolar.top/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "hf.co/your-username/DeepSeek-R1-Construction-Safety-GGUF",
-            prompt: prompt
+            model: "myllama",
+            prompt: promptText
           })
         });
-        const data = await response.json();
-        const replyMsg = document.createElement("div");
-        replyMsg.className = "text-start mb-2";
-        replyMsg.innerHTML = `<strong>机器人:</strong> ${data.response || "无回复"}`;
-        chatBox.appendChild(replyMsg);
-        chatBox.scrollTop = chatBox.scrollHeight;
+
+        if (!response.ok) {
+          console.error("请求失败，状态码：", response.status);
+          return;
+        }
+        if (!response.body) {
+          console.error("未获取到响应流");
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        let replyText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.trim() !== "") {
+              try {
+                const jsonData = JSON.parse(line);
+                if ("response" in jsonData) {
+                  replyText += filterResponse(jsonData.response);
+                  replyMsg.innerHTML = `<strong>机器人:</strong> ${replyText}`;
+                  chatBox.scrollTop = chatBox.scrollHeight;
+                }
+              } catch (e) {
+                console.error("JSON解析错误:", e);
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error("聊天机器人请求错误:", error);
+      }
+    });
+
+    // 置信度滑块设置
+    document.getElementById("confidence-slider").addEventListener("input", async function () {
+      const value = parseFloat(this.value).toFixed(2);
+      document.getElementById("confidence-value").textContent = value;
+      try {
+        const response = await fetch(`${BASE_URL}/examination/confidence/?v=${value}`, {
+          method: "GET"
+        });
+        if (!response.ok) throw new Error("设置失败");
+        console.log("置信度阈值已更新为", value);
+      } catch (err) {
+        console.error("更新置信度失败：", err);
       }
     });
   </script>

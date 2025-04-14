@@ -40,7 +40,9 @@ async def main_examination(request: Request, index: int = Query(default=0, ge=0,
     detr = myfunc.Detector(config.YOLO_MODEL_PATH, config.FACE_DB_PATH)
     return StreamingResponse(frame(detr, cap, request), media_type='multipart/x-mixed-replace; boundary=frame')
 
-@app.post('/examination/confidence/')
+
+
+@app.get('/examination/confidence/')
 async def change_conf(v: float = Query(ge=0, le=1)):
     global conf_threshold
     conf_threshold = v
