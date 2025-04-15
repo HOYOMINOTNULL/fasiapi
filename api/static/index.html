@@ -302,6 +302,9 @@
     });
 
     /* ----------------------- 视频流模块 ----------------------- */
+ let isStreaming = false;
+ let currentIndex = null;
+
     async function startStream() {
       const video = document.getElementById('video-stream');
       const index = document.getElementById('cameraSelect').value;
@@ -326,6 +329,8 @@
       const video = document.getElementById('video-stream');
       video.src = blackImageDataURL;
       video.style.display = 'block';
+      isStreaming = false;
+      currentIndex = null;
     }
 
     /* ----------------------- 人脸数据管理模块 ----------------------- */

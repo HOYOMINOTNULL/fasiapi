@@ -24,5 +24,5 @@ app.mount("/", StaticFiles(directory=r".\api\static", html=True), name="static")
 
 
 if __name__ == '__main__':
-    #uvicorn.run(app="main:app", host='0.0.0.0', port=8000, workers=2)
+    uvicorn.run(app="main:app", host='0.0.0.0', port=8000, workers=2)
     "fastapi run main.py"

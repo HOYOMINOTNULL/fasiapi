@@ -32,7 +32,7 @@ class Detector():
 
 
 
-    def examine(self, image: np.ndarray, conf_threshold: float) -> np.ndarray:
+    def examine(self, image: np.ndarray, conf_threshold: float) -> tuple[np.ndarray, bool]:
         trans = cv.cvtColor(image, cv.COLOR_BGR2RGB) #预处理
         res = self.model.predict(trans, imgsz=self.input_size,
                     conf=conf_threshold,
@@ -41,6 +41,7 @@ class Detector():
                     verbose=False)
         raw_image = image.copy()
         invalid_record = []
+        flag = False
         for r in res:
             image = r.plot(img=image)
             for box in r.boxes:
@@ -50,6 +51,8 @@ class Detector():
                     x1, y1, x2, y2 = map(int, xyxy)
                     cropped = raw_image[y1:y2, x1:x2]
                     invalid_record.append(cropped)
+        if invalid_record:
+            flag = True
         invalid_faces = self.face_recognize(invalid_record)
         database = sq.connect(self.database_path)
         cursor = database.cursor()
@@ -57,7 +60,7 @@ class Detector():
         res = cursor.fetchall()
         database.close()
         self.multi_process(invalid_record, invalid_faces, res)
-        return image
+        return image, flag
     
     def face_recognize(self, captures: list[np.ndarray]) -> list[list[tuple[int, int, int, int]]]:
         '''
