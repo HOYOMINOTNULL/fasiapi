@@ -115,6 +115,7 @@ config.py
 
 
 ##### 项目基本文件结构:
+```python
 SAFETY_HELMET_PROJECT 【项目根目录】
     |------api 【路由列表】
     |       |------examination
@@ -137,7 +138,7 @@ SAFETY_HELMET_PROJECT 【项目根目录】
     |
     |----config.py 【项目配置文件】
     |----main.py 【服务器启动脚本】
-
+```
 
 ##### 数据库基本结构：
     数据库包含两个表:
