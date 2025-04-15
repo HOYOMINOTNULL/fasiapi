@@ -5,7 +5,8 @@ from api.facedata.face import app as facedata
 from api.examination.examination import app as examination
 from api.examination.record import app as record
 from fastapi.staticfiles import StaticFiles
-from api.examination.record import app as record
+
+
 app = FastAPI()
 
 app.add_middleware(
