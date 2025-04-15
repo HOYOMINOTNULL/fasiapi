@@ -146,22 +146,22 @@ SAFETY_HELMET_PROJECT 【项目根目录】
         examination_res 【用于存放检测到的违规记录】【一人一天最多会被记一次】
 
     face_data表结构:
-    id: int,
-    face_type: text,  该人脸信息类型，已知KNOWN，未知UNKNOWN
-    code: text, 工号
-    name: text, 姓名
-    filename: text, 图像文件名
-    size: int, 图像大小
-    type: text, 图像格式
-    data: BLOB,  二进制图像数据
-    encoding: text 人脸编码
+      id: int,
+      face_type: text,  该人脸信息类型，已知KNOWN，未知UNKNOWN
+      code: text, 工号
+      name: text, 姓名
+      filename: text, 图像文件名
+      size: int, 图像大小
+      type: text, 图像格式
+      data: BLOB,  二进制图像数据
+      encoding: text 人脸编码
 
     examination_res表结构
-    id: int,
-    type: text, 数据库中是否有该人脸的个人信息，即该人脸是否已知，值为KNOWN或UNKNOWN
-    face_id: int, 该人脸在face_data表中的编号
-    time: int, 违规时间
-    image: BLOB 二进制图像数据，存储违规时的图像
+      id: int,
+      type: text, 数据库中是否有该人脸的个人信息，即该人脸是否已知，值为KNOWN或UNKNOWN
+      face_id: int, 该人脸在face_data表中的编号
+      time: int, 违规时间
+      image: BLOB 二进制图像数据，存储违规时的图像
 
 ##### 主要实现：
 ```python
@@ -207,7 +207,7 @@ SAFETY_HELMET_PROJECT 【项目根目录】
     alert() -> str:
         #读取全局变量invalid_flag，存在违规行为则返回'1'，否则返回'0'
 
-    ###record.py
+    ##record.py
 
     #类定义
     class RecordQuery(BaseModel):
