@@ -54,7 +54,7 @@ async def change_conf(v: float = Query(ge=0, le=1)):
     conf_threshold = v
 
 @app.get('/examination/alert',response_class=PlainTextResponse)
-async def alert() -> str:
+async def alert():
     '''
     是否发出警报，'1'为报警，'0'为否
     '''
