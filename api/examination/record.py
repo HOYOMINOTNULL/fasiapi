@@ -14,6 +14,7 @@ examination_res表结构
     type: text 数据库中是否有该人脸的个人信息，即该人脸是否已知，值为KNOWN或UNKNOWN
     face_id: int 该人脸在face_data表中的编号
     time: int 违规时间
+    image: BLOB 违规图像
 '''
 
 class RecordQuery(BaseModel):

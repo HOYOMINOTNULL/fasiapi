@@ -41,7 +41,6 @@ async def all_face_data() -> list[FaceData]:
     cursor = database.cursor()
     cursor.execute('SELECT * FROM face_data')
     res = cursor.fetchone()
-
     while res:
         type = res[1]
         if type == 'KNOWN':
@@ -107,7 +106,6 @@ async def query_face_data(code: Optional[str] = None, name: Optional[str] = None
     '''
     if code == None and name == None:
         return
-
     database = sq.connect(config.FACE_DB_PATH)
     cursor = database.cursor()
     if code !=None and name !=None:
@@ -128,7 +126,6 @@ async def query_face_data(code: Optional[str] = None, name: Optional[str] = None
         data = r[7]
         image = base64.b64encode(data).decode()
         ret.append( FaceData(code=code, name=name, image=image))
-
     #print(f"code{ret[0].code},name{ret[0].name}")
     database.close()
     return ret
