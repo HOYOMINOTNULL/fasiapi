@@ -261,13 +261,13 @@
           alertBox.style.display = "block";
           if (state === "1") {
             alertBox.style.color = "red";
-            alertBox.textContent = "请注意佩戴头盔";
+            alertBox.textContent = "注意佩戴头盔";
             if (lastAlertState !== "1") {
-              const audio = new Audio("static/alert.mp3"); // 请将音频文件放在 static 文件夹下
+              const audio = new Audio("alert.mp3"); // 请将音频文件放在 static 文件夹下
               audio.play();
             }
             lastAlertState = "1";
-          } else if (state === "0") {
+          } else if (state == "0") {
             alertBox.style.color = "green";
             alertBox.textContent = "暂无安全隐患";
             lastAlertState = "0";

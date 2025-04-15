@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
 import config
+from fastapi.responses import PlainTextResponse
 import api.examination.function as myfunc
 import cv2 as cv
 
@@ -47,9 +48,9 @@ async def change_conf(v: float = Query(ge=0, le=1)):
     global conf_threshold
     conf_threshold = v
 
-@app.get('/examination/alert')
-async def alert() -> str:
+@app.get('/examination/alert',response_class=PlainTextResponse)
+async def alert() :
     if invalid_flag:
-        return '1'
+        return "1"
     else:
-        return '0'
+        return "0"
