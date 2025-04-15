@@ -101,8 +101,9 @@ class Detector():
             res = cursor.fetchone()
             if res:
                 time = res[-1]
+                print(face_id, time)
                 time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-                if time.year != current.year and time.month != current.month and time.day != current.day:
+                if time.year != current.year or time.month != current.month or time.day != current.day:
                     cursor.execute("INSERT INTO examination_res (type, face_id, time, image) VALUES (?, ?, ?, ?)", 
                                    (type, face_id, current.strftime("%Y-%m-%d %H:%M:%S"), image_data))
                     database.commit()
