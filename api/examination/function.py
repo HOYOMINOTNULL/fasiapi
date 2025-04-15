@@ -37,6 +37,7 @@ class Detector():
                     iou=self.iou_threshold,
                     augment=True,
                     verbose=False)
+
         raw_image = image.copy()
         invalid_record = []
         flag = False
@@ -99,6 +100,7 @@ class Detector():
             res = cursor.fetchone()
             if res:
                 time = res[-1]
+
                 time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
                 if time.year != current.year or time.month != current.month or time.day != current.day:
                     cursor.execute("INSERT INTO examination_res (type, face_id, time, image) VALUES (?, ?, ?, ?)", 
