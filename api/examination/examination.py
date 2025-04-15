@@ -48,5 +48,8 @@ async def change_conf(v: float = Query(ge=0, le=1)):
     conf_threshold = v
 
 @app.get('/examination/alert')
-async def alert():
-    return invalid_flag
+async def alert() -> str:
+    if invalid_flag:
+        return '1'
+    else:
+        return '0'
