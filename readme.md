@@ -163,6 +163,31 @@ SAFETY_HELMET_PROJECT 【项目根目录】
       time: int, 违规时间
       image: BLOB 二进制图像数据，存储违规时的图像
 
+    数据库部署:
+```sql
+    CREATE TABLE "face_data" (
+        "id"	INTEGER NOT NULL,
+        "face_type"	TEXT NOT NULL,
+        "code"	TEXT,
+        "name"	TEXT,
+        "filename"	TEXT,
+        "size"	INTEGER,
+        "type"	TEXT,
+        "data"	BLOB NOT NULL,
+        "encoding"	TEXT NOT NULL,
+        PRIMARY KEY("id" AUTOINCREMENT)
+    );
+
+    CREATE TABLE "examination_res" (
+        "id"	INTEGER NOT NULL,
+        "type"	TEXT NOT NULL,
+        "face_id"	INTEGER NOT NULL,
+        "time"	DATETIME NOT NULL,
+        "image"	BLOB,
+        PRIMARY KEY("id" AUTOINCREMENT)
+    );
+```
+
 ##### 主要实现：
 ```python
 
