@@ -69,9 +69,9 @@ def save_label_file(img_jpg_file_name, size, img_box):
     with open(save_file_name, "a+") as f:
         for box in img_box:
             if box[0] == 'person':  # 数据集 xml 中的 person 指的是头
-                cls_num = 1
+                cls_num = 0
             elif box[0] == 'hat':
-                cls_num = 2
+                cls_num = 1
             else:
                 continue
             new_box = cord_converter(size, box[1:])  # 转换坐标

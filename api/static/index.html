@@ -240,8 +240,6 @@
     <div id="camera-tags" class="d-flex justify-content-center mb-3">
       <!-- 为每个摄像头生成一个标签按钮 -->
       <button type="button" class="btn btn-outline-primary me-2 camera-tag active" data-index="0">摄像头 0</button>
-      <button type="button" class="btn btn-outline-primary me-2 camera-tag" data-index="1">摄像头 1</button>
-      <button type="button" class="btn btn-outline-primary me-2 camera-tag" data-index="2">摄像头 2</button>
     </div>
     <!-- 视频流展示区域，居中显示 -->
     <div class="row justify-content-center">
@@ -547,7 +545,7 @@
           body: formData
         });
         const result = await response.text();
-        document.getElementById("upload-output").textContent = result;
+        alert("上传成功");
       } catch (error) {
         document.getElementById("upload-output").textContent = error;
       }
@@ -627,7 +625,7 @@
       chatBox.appendChild(replyMsg);
 
       try {
-        const response = await fetch("http://192.168.175.195:11434/api/generate", {
+        const response = await fetch("http://78eff628.r9.cpolar.top/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
