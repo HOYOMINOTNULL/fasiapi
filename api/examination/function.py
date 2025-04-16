@@ -30,8 +30,6 @@ class Detector():
         self.database_path = data_path
         # 模型标签 {0: 'person', 1: 'head', 2: 'helmet'}
 
-
-
     def examine(self, image: np.ndarray, conf_threshold: float) -> tuple[np.ndarray, bool]:
         trans = cv.cvtColor(image, cv.COLOR_BGR2RGB) #预处理
         res = self.model.predict(trans, imgsz=self.input_size,
