@@ -12,9 +12,6 @@ import config
 
 app = APIRouter()
 
-class FaceQuery(BaseModel):
-    code: Optional[str] = None
-    name: Optional[str] = None
 
 class FaceData(BaseModel):
     code: str
@@ -89,8 +86,9 @@ async def upload_face(code: str = Form(), name: str = Form(), data: UploadFile =
         if flag:
 
             cursor.execute(
-                f"UPDATE face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?) WHERE id={r[0]}", 
-                save_data)
+                "UPDATE face_data SET face_type = ?, code = ?, name = ?, filename = ?, size = ?, type = ?, data = ?, encoding = ? WHERE id = ?", 
+                (*save_data, r[0])
+            )
         else:
             cursor.execute(
                 'INSERT INTO face_data (face_type, code, name, filename, size, type, data, encoding) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -101,38 +99,33 @@ async def upload_face(code: str = Form(), name: str = Form(), data: UploadFile =
         return {'message': 'There\'s no face'}
 
 @app.get('/face/query/')
-async def query_face_data(query: FaceQuery) -> Optional[FaceData]:
+async def query_face_data(code: Optional[str] = None, name: Optional[str] = None) -> list[FaceData]:
     '''
     查询数据库中的人脸数据，以工号code和姓名name为索引，code不为None则优先以code为索引进行查询，
     否则以name为索引进行查询，若code和name都为None则无法查询
     '''
-    if query.code == None and query.name == None:
-        return 
-    elif query.code != None:
-        database = sq.connect(config.FACE_DB_PATH)
-        cursor = database.cursor()
-        cursor.execute('SELECT * FROM face_data WHERE code=?', (query.code,))
-        res = cursor.fetchone()
-        database.close()
-        if not res:
-            return None
-        name = res[3]
-        data = res[7]
+    if code == None and name == None:
+        return
+    database = sq.connect(config.FACE_DB_PATH)
+    cursor = database.cursor()
+    if code !=None and name !=None:
+        cursor.execute('SELECT * FROM face_data WHERE code=? and name=?', (code,name))
+    elif code != None:
+        cursor.execute('SELECT * FROM face_data WHERE code=? ', (code,))
+    else :
+        cursor.execute('SELECT * FROM face_data WHERE name=? ', (name,))
+
+    results = cursor.fetchall()
+    database.close()
+    ret=[]
+    if len(results) ==0:
+        return
+    for r in results:
+        code = r[2]
+        name = r[3]
+        data = r[7]
         image = base64.b64encode(data).decode()
-        ret = FaceData(code=query.code, name=name, image=image)
-        database.close()
-        return ret
-    else:
-        database = sq.connect(config.FACE_DB_PATH)
-        cursor = database.cursor()
-        cursor.execute('SELECT * FROM face_data WHERE name=?', (query.name,))
-        res = cursor.fetchone()
-        database.close()
-        if not res:
-            return None
-        code = res[2]
-        data = res[7]
-        image = base64.b64encode(data).decode()
-        ret = FaceData(code=code, name=query.name, image=image)
-        database.close()
-        return ret
+        ret.append( FaceData(code=code, name=name, image=image))
+    #print(f"code{ret[0].code},name{ret[0].name}")
+    database.close()
+    return ret

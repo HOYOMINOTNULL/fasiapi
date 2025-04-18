@@ -2,54 +2,104 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>FastAPI 前端示例</title>
+  <title>FastAPI 前端示例 - 优化版</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+  <!-- Animate.css（用于额外动画效果，可选） -->
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.min.css">
   <style>
-    /* 整体布局：左侧导航、右侧内容 */
+    /* 全局背景与粒子特效容器 */
+    .camera-tag {
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .camera-tag:active {
+    transform: scale(0.95);
+  }
+  /* 选中时的高亮效果 */
+  .camera-tag.active, .camera-tag:hover {
+    background-color: #0d6efd;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(13, 110, 253, 0.6);
+  }
     html, body {
       height: 100%;
       margin: 0;
-      overflow: hidden; /* 禁止整体滚动 */
-    }
-    body {
-      display: flex;
+      overflow: hidden;
       font-family: Arial, sans-serif;
+      position: relative;
+      background: url('https://source.unsplash.com/1600x900/?landscape') no-repeat center center fixed;
+      background-size: cover;
     }
+    #particles-js {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .content-wrapper {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      height: 100vh;
+    }
+    /* 左侧导航 */
     .sidebar {
       width: 240px;
-      background-color: #343a40;
-      color: white;
+      background-color: rgba(52,58,64, 0.9);
+      color: #fff;
       padding-top: 30px;
       height: 100vh;
       position: fixed;
       top: 0;
       left: 0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.4);
+    }
+    .sidebar h4 {
+      margin-bottom: 1rem;
     }
     .sidebar a {
-      color: white;
+      color: #fff;
       text-decoration: none;
       padding: 15px 20px;
       display: block;
-      transition: background 0.3s;
+      transition: background 0.3s, transform 0.2s;
     }
     .sidebar a:hover, .sidebar a.active {
       background-color: #495057;
+      transform: scale(1.02);
     }
+    /* 右侧主体内容 */
     .main {
       margin-left: 240px;
       padding: 20px;
       width: calc(100% - 240px);
       height: 100vh;
       overflow: hidden;
+      position: relative;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      animation: fadeInUp 0.6s;
     }
-    /* 模块区域，只显示当前模块 */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    /* 模块区域切换动画 */
     .section {
       display: none;
       height: 100%;
-      overflow-y: auto; /* 内部滚动 */
+      overflow-y: auto;
       opacity: 0;
       transform: translateY(30px);
       transition: all 0.6s ease;
@@ -60,163 +110,421 @@
       transform: none;
     }
     .video-stream {
-      width: 100%;
-      max-width: 640px;
-      height: 480px;
-      border: 1px solid #ccc;
+      display: block;           /* 使图片成为块级元素 */
+  margin: 0 auto;           /* 自动左右外边距，实现居中 */
+  width: 100%;
+  max-width: 640px;
+  height: 480px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
     }
     pre {
       background-color: #f8f9fa;
       padding: 10px;
+      border-radius: 5px;
     }
     select, button {
       margin-right: 10px;
     }
+    /* 按钮样式优化 */
+    .btn {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:active {
+      transform: scale(0.95);
+      box-shadow: none;
+    }
+    .btn i {
+      margin-right: 6px;
+      transition: transform 0.2s ease;
+    }
+    .btn:hover i {
+      transform: translateY(-2px);
+    }
+    /* 滑动条样式定制 */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 8px;
+      background: #ddd;
+      border-radius: 4px;
+    }
+    input[type=range]::-moz-range-track {
+      height: 8px;
+      background: #ddd;
+      border-radius: 4px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      background: #007bff;
+      border: none;
+      border-radius: 50%;
+      margin-top: -6px;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+    input[type=range]:active::-webkit-slider-thumb {
+      transform: scale(1.2);
+      background-color: #0056b3;
+    }
+    input[type=range]::-moz-range-thumb {
+      height: 20px;
+      width: 20px;
+      background: #007bff;
+      border: none;
+      border-radius: 50%;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+    input[type=range]:active::-moz-range-thumb {
+      transform: scale(1.2);
+      background-color: #0056b3;
+    }
+    /* 预警区域样式 */
+    #alert-box {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      padding: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: green;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      z-index: 100;
+      transform: translateX(-18px);
+      transition: all 0.3s ease;
+    }
   </style>
 </head>
 <body>
-  <!-- 左侧导航栏 -->
-  <nav class="sidebar">
-    <h4 class="text-center mb-4"><i class="bi bi-cpu"></i> 控制台</h4>
-    <a href="#" data-target="video-section" class="nav-link active">
-      <i class="bi bi-camera-video"></i> 视频流展示
-    </a>
-    <a href="#" data-target="face-section" class="nav-link">
-      <i class="bi bi-person-bounding-box"></i> 人脸数据管理
-    </a>
-    <a href="#" data-target="record-section" class="nav-link">
-      <i class="bi bi-clipboard-data"></i> 违规记录展示
-    </a>
-  </nav>
+  <!-- 粒子特效容器 -->
+  <div id="particles-js"></div>
 
-  <!-- 主体内容区域 -->
-  <div class="main">
-    <!-- 视频流展示模块 -->
-    <div id="video-section" class="section active">
-      <h1 class="mt-4 text-center">视频流展示</h1>
-      <div class="container">
-        <div class="row align-items-center">
-          <!-- 左侧：选择摄像头列表 -->
-          <div class="col-md-3">
-            <div class="mb-3">
-              <label for="cameraSelect" class="form-label">选择摄像头：</label>
-              <select id="cameraSelect" class="form-select">
-                <option value="0">摄像头 0</option>
-                <option value="1">摄像头 1</option>
-                <option value="2">摄像头 2</option>
-              </select>
+  <!-- 页面内容容器 -->
+  <div class="content-wrapper">
+    <!-- 左侧导航栏 -->
+    <nav class="sidebar">
+      <h4 class="text-center mb-4"><i class="bi bi-cpu"></i> 控制台</h4>
+      <a href="#" data-target="video-section" class="nav-link active">
+        <i class="bi bi-camera-video"></i> 视频流展示
+      </a>
+      <a href="#" data-target="face-section" class="nav-link">
+        <i class="bi bi-person-bounding-box"></i> 人脸数据管理
+      </a>
+      <a href="#" data-target="record-section" class="nav-link">
+        <i class="bi bi-clipboard-data"></i> 违规记录展示
+      </a>
+      <a href="#" data-target="chat-section" class="nav-link">
+        <i class="bi bi-chat-left-text"></i> 智能聊天机器人
+      </a>
+    </nav>
+
+    <!-- 主体内容区域 -->
+    <div class="main">
+      <!-- 预警区域 -->
+      <div id="alert-box">暂无安全隐患</div>
+
+      <!-- 视频流展示模块 -->
+     <div id="video-section" class="section active">
+  <h1 class="mt-4 text-center">视频流展示</h1>
+  <div class="container">
+    <!-- 摄像头选择区域 - 使用标签按钮 -->
+    <div id="camera-tags" class="d-flex justify-content-center mb-3">
+      <!-- 为每个摄像头生成一个标签按钮 -->
+      <button type="button" class="btn btn-outline-primary me-2 camera-tag active" data-index="0">摄像头 0</button>
+    </div>
+    <!-- 视频流展示区域，居中显示 -->
+    <div class="row justify-content-center">
+      <div class="col-md-8 text-center">
+        <img id="video-stream" class="video-stream img-fluid rounded" src="http://127.0.0.1:8000/examination/?index=0" alt="视频流">
+      </div>
+    </div>
+    <!-- 识别置信度滑动条 -->
+    <div class="row justify-content-center mt-4">
+      <div class="col-md-6">
+        <label for="confidence-slider" class="form-label text-center w-100">
+          识别置信度阈值：<span id="confidence-value">0.5</span>
+        </label>
+        <input type="range" class="form-range" id="confidence-slider" min="0.1" max="1" step="0.01" value="0.5">
+      </div>
+    </div>
+    <!-- 视频流下方操作按钮 -->
+    <div class="row mt-4">
+      <div class="col text-center">
+
+        <button class="btn btn-danger" onclick="stopStream()">
+          <i class="bi bi-stop-fill"></i> 关闭视频流
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- 人脸数据管理模块 -->
+      <div id="face-section" class="section">
+        <h1 class="mt-4">人脸数据管理</h1>
+        <div class="mb-4">
+          <button class="btn btn-secondary" id="fetch-all-face">
+            <i class="bi bi-search"></i> 查询全部人脸数据
+          </button>
+          <table class="table table-bordered mt-3" id="face-table">
+            <thead>
+              <tr>
+                <th>工号 (code)</th>
+                <th>姓名 (name)</th>
+                <th>图片</th>
+              </tr>
+            </thead>
+            <tbody><!-- 数据动态加载 --></tbody>
+          </table>
+        </div>
+        <form id="face-upload-form" class="mb-4">
+          <h4>上传人脸数据</h4>
+          <div class="mb-3">
+            <label for="upload-code" class="form-label">工号 (code)</label>
+            <input type="text" class="form-control" id="upload-code" required>
+          </div>
+          <div class="mb-3">
+            <label for="upload-name" class="form-label">姓名 (name)</label>
+            <input type="text" class="form-control" id="upload-name" required>
+          </div>
+          <div class="mb-3">
+            <label for="upload-file" class="form-label">选择文件</label>
+            <input type="file" class="form-control" id="upload-file" accept="image/*" required>
+          </div>
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-upload"></i> 上传
+          </button>
+          <pre id="upload-output"></pre>
+        </form>
+        <form id="face-query-form" class="mb-4">
+          <h4>条件查询人脸数据</h4>
+          <div class="mb-3">
+            <label for="query-code" class="form-label">按工号 (code)：</label>
+            <input type="text" class="form-control" id="query-code">
+          </div>
+          <div class="mb-3">
+            <label for="query-name" class="form-label">按姓名 (name)：</label>
+            <input type="text" class="form-control" id="query-name">
+          </div>
+          <button class="btn btn-secondary" type="submit">
+            <i class="bi bi-search"></i> 查询
+          </button>
+          <table class="table table-bordered mt-3" id="face-table-condition">
+            <thead>
+              <tr>
+                <th>工号 (code)</th>
+                <th>姓名 (name)</th>
+                <th>图片</th>
+              </tr>
+            </thead>
+            <tbody><!-- 数据动态加载 --></tbody>
+          </table>
+        </form>
+      </div>
+
+      <!-- 违规记录展示模块 -->
+      <div id="record-section" class="section">
+        <h1 class="mt-4">违规记录展示</h1>
+        <button class="btn btn-secondary mb-3" id="fetch-records">
+          <i class="bi bi-search"></i> 查询违规记录
+        </button>
+        <table class="table table-bordered" id="record-table">
+          <thead>
+            <tr>
+              <th>图片</th>
+              <th>时间</th>
+              <th>姓名</th>
+              <th>ID</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody><!-- 数据动态加载 --></tbody>
+        </table>
+      </div>
+
+      <!-- 智能聊天机器人模块 -->
+      <div id="chat-section" class="section">
+        <h1 class="mt-4 text-center">智能聊天机器人</h1>
+        <div class="container" style="max-width: 800px;">
+          <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f8f9fa; border-radius: 5px;"></div>
+          <div class="mt-3">
+            <div class="input-group">
+              <input id="chat-input" type="text" class="form-control" placeholder="请输入你的问题...">
+              <button id="send-chat" class="btn btn-primary">
+                <i class="bi bi-send"></i> 发送
+              </button>
             </div>
           </div>
-          <!-- 右侧：视频流展示区域 -->
-          <div class="col-md-9 text-center">
-            <img id="video-stream" class="video-stream" src="http://127.0.0.1:8000/examination/?index=0" alt="视频流">
-          </div>
-        </div>
-        <!-- 按钮区域：位于视频流下方，按钮中间有空白 -->
-        <div class="row mt-4">
-          <div class="col text-center">
-            <button class="btn btn-success me-3" onclick="startStream()">开始视频流</button>
-            <button class="btn btn-danger" onclick="stopStream()">关闭视频流</button>
-          </div>
         </div>
       </div>
-    </div>
-
-    <!-- 人脸数据管理模块 -->
-    <div id="face-section" class="section">
-      <h1 class="mt-4">人脸数据管理</h1>
-      <div class="mb-4">
-        <button class="btn btn-secondary" id="fetch-all-face">查询全部人脸数据</button>
-        <pre id="all-face-output"></pre>
-      </div>
-      <form id="face-upload-form" class="mb-4">
-        <h4>上传人脸数据</h4>
-        <div class="mb-3">
-          <label for="upload-code" class="form-label">工号 (code)</label>
-          <input type="text" class="form-control" id="upload-code" required>
-        </div>
-        <div class="mb-3">
-          <label for="upload-name" class="form-label">姓名 (name)</label>
-          <input type="text" class="form-control" id="upload-name" required>
-        </div>
-        <div class="mb-3">
-          <label for="upload-file" class="form-label">选择文件</label>
-          <input type="file" class="form-control" id="upload-file" accept="image/*" required>
-        </div>
-        <button class="btn btn-primary" type="submit">上传</button>
-        <pre id="upload-output"></pre>
-      </form>
-      <form id="face-query-form" class="mb-4">
-        <h4>查询人脸数据</h4>
-        <div class="mb-3">
-          <label for="query-code" class="form-label">按工号 (code)：</label>
-          <input type="text" class="form-control" id="query-code">
-        </div>
-        <div class="mb-3">
-          <label for="query-name" class="form-label">按姓名 (name)：</label>
-          <input type="text" class="form-control" id="query-name">
-        </div>
-        <button class="btn btn-secondary" type="submit">查询</button>
-        <pre id="query-output"></pre>
-      </form>
-    </div>
-
-    <!-- 违规记录展示模块 -->
-    <div id="record-section" class="section">
-      <h1 class="mt-4">违规记录展示</h1>
-      <button class="btn btn-secondary mb-3" id="fetch-records">查询违规记录</button>
-      <pre id="record-output"></pre>
     </div>
   </div>
 
-  <!-- JavaScript：包含功能及导航控制 -->
+  <!-- 引入 particles.js 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    // 初始化粒子特效
+    particlesJS("particles-js", {
+      "particles": {
+        "number": {
+          "value": 80,
+          "density": {
+            "enable": true,
+            "value_area": 800
+          }
+        },
+        "color": { "value": "#ffffff" },
+        "shape": {
+          "type": "circle",
+          "stroke": { "width": 0, "color": "#000000" }
+        },
+        "opacity": { "value": 0.5, "random": false },
+        "size": { "value": 3, "random": true },
+        "line_linked": {
+          "enable": true,
+          "distance": 150,
+          "color": "#ffffff",
+          "opacity": 0.4,
+          "width": 1
+        },
+        "move": {
+          "enable": true,
+          "speed": 3,
+          "direction": "none",
+          "random": false,
+          "straight": false
+        }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {
+          "onhover": { "enable": true, "mode": "repulse" },
+          "onclick": { "enable": true, "mode": "push" }
+        },
+        "modes": {
+          "repulse": { "distance": 100 },
+          "push": { "particles_nb": 4 }
+        }
+      },
+      "retina_detect": true
+    });
+  </script>
+
+  <!-- 页面功能与导航控制脚本 -->
   <script>
     const BASE_URL = "http://127.0.0.1:8000";
-    // 定义用于无视频流显示的黑屏数据URL（640x480 黑色 PNG 图片）
-    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
+    const blackImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsTAAALEwEAmpwYAAACdElEQVR4nO3dQQ0AAAjDMO5fNQ+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgOwcAATE81lAAAAAElFTkSuQmCC";
 
-    // 导航栏点击事件：切换模块显示
+    let audio = new Audio("alert.mp3");
+
+    // 预警区域，每隔1.5秒请求一次并播放警告音（示例逻辑）
+    let lastAlertState = "1";
+    setInterval(async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/examination/alert`);
+        const text = await response.text();
+        const state = text.trim();
+        const alertBox = document.getElementById("alert-box");
+        if (document.getElementById("video-section").classList.contains("active")) {
+          if (state === "1") {
+            alertBox.style.color = "red";
+            alertBox.textContent = "注意佩戴头盔";
+            if (lastAlertState === "1") {
+              lastAlertState = "0";
+              // 播放警告音，并在播放完成后可执行后续逻辑（如需要）
+              audio.play().then(() => {
+                // 音频播放完成后可以处理逻辑
+              }).catch(e => console.error("音频播放错误：", e));
+              lastAlertState = "1";
+            }
+          } else if (state === "0") {
+            alertBox.style.color = "green";
+            alertBox.textContent = "暂无安全隐患";
+          }
+        } else {
+          alertBox.style.display = "none";
+        }
+      } catch (e) {
+        console.error("预警请求出错：", e);
+      }
+    }, 1500);
+
+    // 导航栏切换
     document.querySelectorAll('.sidebar a').forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
         document.querySelectorAll('.sidebar a').forEach(l => l.classList.remove('active'));
         this.classList.add('active');
         const target = this.getAttribute('data-target');
-        document.querySelectorAll('.section').forEach(section => {
-          section.classList.remove('active');
-        });
+        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
         document.getElementById(target).classList.add('active');
+        document.getElementById("alert-box").style.display = (target === "video-section") ? "block" : "none";
       });
     });
 
     /* ----------------------- 视频流模块 ----------------------- */
-    function startStream() {
+    async function startStream() {
       const video = document.getElementById('video-stream');
       const index = document.getElementById('cameraSelect').value;
-      video.src = `${BASE_URL}/examination/?index=${index}`;
-      // 确保视频区域显示
-      video.style.display = 'block';
+      try {
+        video.src = `${BASE_URL}/examination/?index=${index}`;
+        video.style.display = 'block';
+        document.getElementById("alert-box").style.display = "block";
+      } catch (error) {
+        video.src = blackImageDataURL;
+        video.style.display = 'block';
+        console.error("启动视频流出错：", error);
+        alert("视频流启动出错，请检查网络或摄像头连接。");
+      }
     }
-    function stopStream() {
+    async function stopStream() {
       const video = document.getElementById('video-stream');
-      // 设置为黑屏数据URL，避免出现断图标
       video.src = blackImageDataURL;
       video.style.display = 'block';
+      video.style.margin = "0 auto";
+      document.getElementById("alert-box").style.display = "none";
     }
-
+    document.querySelectorAll('.camera-tag').forEach(btn => {
+    btn.addEventListener('click', function() {
+      // 先移除所有按钮的 active 类
+      document.querySelectorAll('.camera-tag').forEach(b => b.classList.remove('active'));
+      // 当前按钮添加 active 类，并带有动画效果
+      this.classList.add('active');
+      // 更新视频流 URL
+      const index = this.getAttribute('data-index');
+      document.getElementById('video-stream').src = `http://127.0.0.1:8000/examination/?index=${index}`;
+    });
+  });
     /* ----------------------- 人脸数据管理模块 ----------------------- */
-    // 查询全部人脸数据
     document.getElementById("fetch-all-face").addEventListener("click", async () => {
       try {
         const response = await fetch(`${BASE_URL}/face/all`);
         const data = await response.json();
-        document.getElementById("all-face-output").textContent = JSON.stringify(data, null, 2);
+        const tableBody = document.querySelector("#face-table tbody");
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+          const imgSrc = "data:image/jpeg;base64," + item.image;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.code}</td>
+            <td>${item.name}</td>
+            <td><img src="${imgSrc}" alt="人脸图片" style="max-width:100px; max-height:100px;"></td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        document.getElementById("all-face-output").textContent = error;
+        console.error("查询全部人脸数据出错：", error);
       }
     });
-
-    // 上传人脸数据
     document.getElementById("face-upload-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = document.getElementById("upload-code").value;
@@ -237,30 +545,35 @@
           body: formData
         });
         const result = await response.text();
-        document.getElementById("upload-output").textContent = result;
+        alert("上传成功");
       } catch (error) {
         document.getElementById("upload-output").textContent = error;
       }
     });
-
-    // 查询人脸数据
     document.getElementById("face-query-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = document.getElementById("query-code").value;
       const name = document.getElementById("query-name").value;
       let url = `${BASE_URL}/face/query/?`;
-      if (code) {
-        url += `code=${encodeURIComponent(code)}&`;
-      }
-      if (name) {
-        url += `name=${encodeURIComponent(name)}`;
-      }
+      if (code) url += `code=${encodeURIComponent(code)}&`;
+      if (name) url += `name=${encodeURIComponent(name)}`;
       try {
         const response = await fetch(url);
         const data = await response.json();
-        document.getElementById("query-output").textContent = JSON.stringify(data, null, 2);
+        const tableBody = document.querySelector("#face-table-condition tbody");
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+          const imgSrc = "data:image/jpeg;base64," + item.image;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.code}</td>
+            <td>${item.name}</td>
+            <td><img src="${imgSrc}" alt="人脸图片" style="max-width:100px; max-height:100px;"></td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        document.getElementById("query-output").textContent = error;
+        console.error("条件查询人脸数据出错：", error);
       }
     });
 
@@ -269,9 +582,105 @@
       try {
         const response = await fetch(`${BASE_URL}/record/`);
         const data = await response.json();
-        document.getElementById("record-output").textContent = JSON.stringify(data, null, 2);
+        const tableBody = document.querySelector("#record-table tbody");
+        tableBody.innerHTML = "";
+        data.forEach(record => {
+          const imgSrc = "data:image/jpg;base64," + record.image;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${imgSrc}" alt="违规记录图片" style="max-width:100px; max-height:100px;"></td>
+            <td>${record.time}</td>
+            <td>${record.name}</td>
+            <td>${record.code}</td>
+            <td>${record.type}</td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        document.getElementById("record-output").textContent = error;
+        console.error("获取违规记录出错：", error);
+      }
+    });
+
+    /* ----------------------- 智能聊天机器人模块 ----------------------- */
+    function filterResponse(text) {
+      return text.replace(/[A-Za-z#]/g, '');
+    }
+    document.getElementById("send-chat").addEventListener("click", async () => {
+      const input = document.getElementById("chat-input");
+      const promptText = input.value.trim();
+      if (!promptText) return;
+      const chatBox = document.getElementById("chat-box");
+
+      // 显示用户消息
+      const userMsg = document.createElement("div");
+      userMsg.className = "text-end mb-2";
+      userMsg.innerHTML = `<strong>用户:</strong> ${promptText}`;
+      chatBox.appendChild(userMsg);
+      input.value = "";
+
+      // 显示回复容器
+      const replyMsg = document.createElement("div");
+      replyMsg.className = "text-start mb-2";
+      replyMsg.innerHTML = `<strong>机器人:</strong> `;
+      chatBox.appendChild(replyMsg);
+
+      try {
+        const response = await fetch("http://6e3dff7a.r9.cpolar.top/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "myllama",
+            prompt: promptText
+          })
+        });
+        if (!response.ok) {
+          console.error("请求失败，状态码：", response.status);
+          return;
+        }
+        if (!response.body) {
+          console.error("未获取到响应流");
+          return;
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        let replyText = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (line.trim() !== "") {
+              try {
+                const jsonData = JSON.parse(line);
+                if ("response" in jsonData) {
+                  replyText += filterResponse(jsonData.response);
+                  replyMsg.innerHTML = `<strong>机器人:</strong> ${replyText}`;
+                  chatBox.scrollTop = chatBox.scrollHeight;
+                }
+              } catch (e) {
+                console.error("JSON解析错误:", e);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("聊天机器人请求错误:", error);
+      }
+    });
+
+    // 置信度滑块监听
+    document.getElementById("confidence-slider").addEventListener("input", async function () {
+      const value = parseFloat(this.value).toFixed(2);
+      document.getElementById("confidence-value").textContent = value;
+      try {
+        const response = await fetch(`${BASE_URL}/examination/confidence/?v=${value}`, { method: "GET" });
+        if (!response.ok) throw new Error("设置失败");
+        console.log("置信度阈值已更新为", value);
+      } catch (err) {
+        console.error("更新置信度失败：", err);
       }
     });
   </script>
