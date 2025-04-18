@@ -83,7 +83,7 @@ class Detector():
         flag = False
         for r in res:
             encode = StrToEncoding(r[-1])
-            comp_res = fr.compare_faces(target, encode)
+            comp_res = fr.compare_faces(target, encode, tolerance=0.5)
             if comp_res:
                 flag = comp_res[0]
             if flag:
